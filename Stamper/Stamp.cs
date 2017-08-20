@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Stamper.Generators;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -44,6 +45,12 @@ namespace Stamper
                 Bind(name, value);
             }
             return this;
+        }
+
+        public Stamp<T> Bind<TProperty>(Expression<Func<T, TProperty>> property, Func<StampGenerator<T, TProperty>, TProperty> callback)
+        {
+            var generator = new StampGenerator<T, TProperty>(this, property);
+            return Bind(property, callback(generator));
         }
 
         private void BindList<TProperty>(PropertyInfo prop, TProperty value)
