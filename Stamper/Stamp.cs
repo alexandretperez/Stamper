@@ -31,18 +31,23 @@ namespace Stamper
         {
             var name = (property.Body as MemberExpression).Member.Name;
             var prop = _type.GetProperty(name);
+            return Bind(prop, value);
+        }
+
+        private Stamp<T> Bind<TProperty>(PropertyInfo prop, TProperty value)
+        {
             if (!prop.CanWrite)
             {
                 var args = prop.PropertyType.GetGenericArguments();
                 if (args.Length == 0)
                     return this;
 
-                if (typeof(ICollection<>).MakeGenericType(args[0]).IsAssignableFrom(prop.PropertyType) && typeof(IEnumerable).IsAssignableFrom(typeof(TProperty)))
+                if (typeof(ICollection<>).MakeGenericType(args[0]).IsAssignableFrom(prop.PropertyType))
                     BindList(prop, value);
             }
             else
             {
-                Bind(name, value);
+                _bindings.Add(obj => prop.SetValue(obj, value));
             }
             return this;
         }
@@ -61,11 +66,6 @@ namespace Stamper
                 foreach (var item in ((IEnumerable)value))
                     add.Invoke(prop.GetValue(obj), new object[] { item });
             });
-        }
-
-        private void Bind<TProperty>(string name, TProperty value)
-        {
-            _bindings.Add(obj => _type.GetProperty(name).SetValue(obj, value));
         }
 
         public Random Random => _random;
@@ -87,7 +87,7 @@ namespace Stamper
         public Stamp<T> As<TModel>(TModel obj)
         {
             foreach (var prop in obj.GetType().GetProperties())
-                Bind(prop.Name, prop.GetValue(obj));
+                Bind(prop, prop.GetValue(obj));
 
             return this;
         }
