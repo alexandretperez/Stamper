@@ -86,8 +86,13 @@ namespace Stamper
 
         public Stamp<T> As<TModel>(TModel obj)
         {
+            var type = typeof(T);
             foreach (var prop in obj.GetType().GetProperties())
-                Bind(prop, prop.GetValue(obj));
+            {
+                var modelProp = type.GetProperty(prop.Name);
+                if (modelProp != null)
+                    Bind(modelProp, prop.GetValue(obj));
+            }
 
             return this;
         }
